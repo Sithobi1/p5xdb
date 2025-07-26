@@ -1,11 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>SQL.js Include Only</title>
-  <!-- Include sql.js from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <meta charset="UTF-8">
+    <title>p5x db</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
+    <script>
+        config = {
+            locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/${filename}`
+        }
+
+        initSqlJs(config).then(SQL => {
+            const db = new SQL.Database();
+            db.run("CREATE TABLE test (col1, col2);");
+            db.run("INSERT INTO test VALUES (?, ?);", ["Hello", "World"]);
+
+            window.db = db;
+        });
+    </script>
 </head>
+
 <body>
+    <textarea id="cmd" name="commands" rows="5" cols="80">SELECT * FROM test</textarea>
+    <button id="run" onclick="exec_db()">Run</button>
+    <div id="output"></div>
+    <script>
+        function exec_db() {
+            const cmd = document.getElementById('cmd').value;
+            let result;
+            try {
+                result = window.db.exec(cmd);
+            } catch (e) {
+                document.getElementById('output').innerHTML = `<span style="color:red;">${e.message}</span>`;
+                return;
+            }
+            if (!result.length) {
+                document.getElementById('output').innerHTML = "<em>No results</em>";
+                return;
+            }
+            let html = "";
+            console.log(result)
+            result.forEach(res => {
+                reshtml = "<table border='1'><thead><tr>";
+                res.columns.forEach(col => {
+                    reshtml += `<th>${col}</th>`;
+                });
+                reshtml += "</tr></thead><tbody>";
+                res.values.forEach(row => {
+                    reshtml += "<tr>";
+                    row.forEach(val => {
+                        reshtml += `<td>${val}</td>`;
+                    });
+                    reshtml += "</tr>";
+                });
+                reshtml += "</tbody></table><br/>";
+                html += reshtml;
+            });
+            document.getElementById('output').innerHTML = html;
+        };
+    </script>
 </body>
+
 </html>
